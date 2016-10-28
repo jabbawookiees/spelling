@@ -41,6 +41,11 @@ def insertables(before, after):
         return [None]
 
 
+def edits0(word):
+    "All edits that are zero edits away from `word`."
+    return [word]
+
+
 def edits1(word):
     "All edits that are one edit away from `word`."
     splits     = [(word[:i], word[i:])    for i in range(len(word) + 1)]

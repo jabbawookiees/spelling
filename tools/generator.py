@@ -5,7 +5,7 @@ from multiprocessing.pool import Pool
 
 import click
 
-from edits import edits1, edits2
+from edits import edits0, edits1, edits2
 
 
 def read_input(filename):
@@ -24,12 +24,17 @@ def chunks(list, n_chunks):
 
 
 def process(args):
-    words_with_counts, func, filename = args
+    words_with_counts, edit_distance, filename = args
+    func = edits0
+    if edit_distance == 1:
+        func = edits1
+    elif edit_distance == 2:
+        func = edits2
     with open(filename, "w") as output:
         writer = csv.writer(output)
         for word, count in words_with_counts:
             for mistake in func(word):
-                writer.writerow([word, mistake, count])
+                writer.writerow([word, mistake, "{:010}".format(count), edit_distance])
 
 
 @click.command()
@@ -49,10 +54,11 @@ def main(source, destination, processors):
 
     pool = Pool(processors)
     args = []
-    args.append([words_with_counts, edits1, os.path.join(destination, "data-edit-1.txt")])
+    args.append([words_with_counts, 0, os.path.join(destination, "data-edit-0.csv")])
+    args.append([words_with_counts, 1, os.path.join(destination, "data-edit-1.csv")])
     for i, chunk in enumerate(chunks(words_with_counts, processors)):
-        fname = os.path.join(destination, "data-edit-2-part-{}.txt".format(i))
-        args.append([chunk, edits2, fname])
+        fname = os.path.join(destination, "data-edit-2-part-{:02}.csv".format(i))
+        args.append([chunk, 2, fname])
     pool.map(process, args)
 
 
