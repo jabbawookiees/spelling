@@ -2,6 +2,7 @@ import h5py
 
 
 class SpellingDataBatcher(object):
+    "Generator that yields things by batch"
     def __init__(self, data, batch_size):
         self.data = data
         self.batch_size = batch_size
@@ -13,6 +14,7 @@ class SpellingDataBatcher(object):
 
 
 class SpellingData(object):
+    "Generator that yields items one by one"
     def __init__(self, filename):
         self.file = h5py.File(filename, 'r')
         self.index = 0

@@ -39,7 +39,9 @@ def process(args):
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
 def main(source, destination, processors):
-    "Pre-compute the matrices for the strings, then serialize them into a numpy-ready format"
+    """Pre-compute the matrices for the strings, then serialize them into a numpy-ready format.
+    This pre-computation provides a speed up on the order of 100x because we have to re-compute every
+    pass otherwise since the data set is so huge"""
     pool = Pool(processors)
 
     inp = open(source)
