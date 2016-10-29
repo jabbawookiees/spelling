@@ -12,7 +12,7 @@ from __future__ import division, print_function, absolute_import
 import tensorflow as tf
 
 
-def transpose_autoencoder():
+def build_model():
     # Network Parameters
     n_hidden_1 = 260  # 1st layer num features
     n_hidden_2 = 130  # 2nd layer num features
@@ -22,11 +22,10 @@ def transpose_autoencoder():
     misspelling = tf.placeholder("float", [None, n_input], name="mistake")
     correct = tf.placeholder("float", [None, n_output], name="correct")
 
-    encoder_m2 = tf.random_normal([n_hidden_1, n_hidden_2])
     weights = {
         'encoder_h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
-        'encoder_h2': tf.Variable(encoder_m2),
-        'decoder_h1': tf.Variable(tf.transpose(encoder_m2)),
+        'encoder_h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
+        'decoder_h1': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_1])),
         'decoder_h2': tf.Variable(tf.random_normal([n_hidden_1, n_output])),
     }
     biases = {
