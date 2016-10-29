@@ -1,3 +1,18 @@
+"""
+Takes the generated data from generator.py and combines them into one
+set.
+
+It's possible for two words to get the same typo. For example "hellx" is
+one edit distance from "hello" and "hell" and two edit distance from "help".
+In this case, we want to map "hellx" to "hello" because it has a smaller
+edit distance than "help" and it is more common than "hell".
+
+
+Usage is:
+python tools/deduplicate.py --source data/generated
+
+Use `python tools/deduplicate.py --help` for a list of options
+"""
 import csv
 import os
 from multiprocessing.pool import Pool
@@ -61,23 +76,28 @@ def merge(fnames, destination_writer):
 @click.command()
 @click.option('--source', default='data/output', show_default=True,
               help='Directory containing the output of generator.py')
-@click.option('--destination', default='data/result.csv', show_default=True,
+@click.option('--destination', default=None, show_default=True,
               help='File containing deduplicated csv')
-@click.option('--tmp', default='data/sorted', show_default=True,
+@click.option('--sorted_files', default=None, show_default=True,
               help='Where to save sorted data before the merge step.')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
-def main(source, destination, tmp, processors):
+def main(source, destination, sorted_files, processors):
+    if destination is None:
+        destination = os.path.join(os.path.dirname(source.rstrip("/")), "deduplicated.csv")
+    if sorted_files is None:
+        sorted_files = os.path.join(os.path.dirname(destination), "sorted")
     try:
-        os.makedirs(tmp)
+        os.makedirs(sorted_files)
     except OSError:
         pass
+
     pool = Pool(processors)
 
     args = []
     filenames = [fname for folder, _, fnames in os.walk(source) for fname in fnames]
     for fname in filenames:
-        args.append([os.path.join(source, fname), os.path.join(tmp, fname)])
+        args.append([os.path.join(source, fname), os.path.join(sorted_files, fname)])
 
     # This part is sort of like mergesort. Sort the different files by misspelling, edit distance, and -count
     sorted_fnames = pool.map(sort_csvs, args)

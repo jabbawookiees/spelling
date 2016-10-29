@@ -1,9 +1,26 @@
+"""
+Takes the data from deduplicate.py and computes the one-hot
+vectors for each character. It is then stored in an hdf5 file
+which allows the data to be loaded directly as numpy objects.
+This provides a huge speedup in training time since the data
+does not fit in memory.
+
+
+Usage is:
+python tools/serialize.py --source data/deduplicated.csv
+
+Use `python tools/serialize.py --help` for a list of options
+"""
+
+import os
 import csv
 from multiprocessing.pool import Pool
 
 import click
 import h5py
 import numpy as np
+
+MAX_LENGTH = 9
 
 
 def group_by_k(iterable, k):
@@ -26,15 +43,15 @@ def vectorize(string, size):
 
 def process(args):
     correct, mistake = args
-    correct_arr = vectorize(correct, 19)
-    mistake_arr = vectorize(mistake, 20)
+    correct_arr = vectorize(correct, MAX_LENGTH)
+    mistake_arr = vectorize(mistake, MAX_LENGTH)
     return correct_arr, mistake_arr
 
 
 @click.command()
-@click.option('--source', default='data/trimmed.csv', show_default=True,
-              help='File containing trimmed csv')
-@click.option('--destination', default='data/serialized.hdf5', show_default=True,
+@click.option('--source', default='data/deduplicated.csv', show_default=True,
+              help='File containing deduplicated data')
+@click.option('--destination', default=None, show_default=True,
               help='Destination of serialized items')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
@@ -42,15 +59,16 @@ def main(source, destination, processors):
     """Pre-compute the matrices for the strings, then serialize them into a numpy-ready format.
     This pre-computation provides a speed up on the order of 100x because we have to re-compute every
     pass otherwise since the data set is so huge"""
+    if destination is None:
+        destination = os.path.join(os.path.dirname(source), "serialized.hdf5")
+
     pool = Pool(processors)
 
     inp = open(source)
     dest_file = h5py.File(destination, "w")
-    correct_dataset = dest_file.create_dataset("correct", (0, 494), maxshape=(None, 494), dtype='int8')
-    mistake_dataset = dest_file.create_dataset("mistake", (0, 520), maxshape=(None, 520), dtype='int8')
-    # dest_file = h5py.File(destination, "a")
-    # correct_dataset = dest_file["correct"]
-    # mistake_dataset = dest_file["mistake"]
+    correct_dataset = dest_file.create_dataset("correct", (0, 26 * MAX_LENGTH), maxshape=(None, 26 * MAX_LENGTH), dtype='int8')
+    mistake_dataset = dest_file.create_dataset("mistake", (0, 26 * MAX_LENGTH), maxshape=(None, 26 * MAX_LENGTH), dtype='int8')
+
     reader = csv.reader(inp)
 
     counter = 0
@@ -58,12 +76,10 @@ def main(source, destination, processors):
         args = []
         for correct, mistake, count, edits in group:
             args.append((correct, mistake))
-            # if counter > 2614000:
-            #     print correct, mistake
+
         counter += len(args)
         print counter
-        # if counter <= 2614000:
-        #     continue
+
         mapped = pool.map(process, args)
 
         for correct_arr, mistake_arr in mapped:

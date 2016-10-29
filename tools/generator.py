@@ -1,3 +1,11 @@
+"""
+Takes the raw data file and makes a set of files containing all words up to
+a fixed edit distance.
+Usage is:
+python tools/generator.py --source data/raw-data.txt --edits 1
+
+Use `python tools/generator.py --help` for a list of options
+"""
 import csv
 import os
 import re
@@ -6,6 +14,9 @@ from multiprocessing.pool import Pool
 import click
 
 from edits import edits0, edits1, edits2
+
+MIN_LENGTH = 4
+MAX_LENGTH = 9
 
 
 def read_input(filename):
@@ -33,28 +44,36 @@ def process(args):
     with open(filename, "w") as output:
         writer = csv.writer(output)
         for word, count in words_with_counts:
+            if MIN_LENGTH > len(word) or len(word) > MAX_LENGTH:
+                continue
             if not (set(word) <= set("abcdefghijklmnopqrstuvwxyz")):
                 continue
             for mistake in func(word):
+                if MIN_LENGTH > len(mistake) or len(mistake) > MAX_LENGTH:
+                    continue
                 writer.writerow([word, mistake, "{:010}".format(count), edit_distance])
 
 
 @click.command()
 @click.option('--source', default='data/raw-data.txt', show_default=True,
               help='Raw data file.')
-@click.option('--destination', default='data/generated', show_default=True,
-              help='Where to save garbled data.')
-@click.option('--edits', default=2, show_default=True,
-              help='Maximum edit distance allowed.')
-@click.option('--fragments', default=None, show_default=True,
-              help='Number of fragments to chunk the edit distance 2 set.')
+@click.option('--destination', default=None, show_default=True,
+              help='Where to save the misspelled data. By default stores in a folder beside the raw data.')
+@click.option('--edits', default=1, show_default=True,
+              help='Maximum edit distance allowed. Max of 2.')
+@click.option('--fragments', default=128, show_default=True,
+              help='Exponential blowup on edit distance 2 requires us to chunk the files for processing.')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
 def main(source, destination, edits, fragments, processors):
+    if destination is None:
+        destination = os.path.join(os.path.dirname(source), "generated")
+
     try:
         os.makedirs(destination)
     except OSError:
         pass
+
     edits = int(edits)
     processors = int(processors)
     if fragments is None:

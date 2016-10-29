@@ -5,25 +5,24 @@ import click
 import tensorflow as tf
 
 from reader import read_data_set
-import mnist_autoencoder
-import identity_autoencoder
+import mnist
+import identity
+import perceptron
 
 
 @click.command()
 @click.option('--source', default='data/serialized.hdf5', show_default=True,
               help='File containing trimmed csv')
-@click.option('--checkpoint', default='checkpoints/default.ckpt', show_default=True,
-              help='Checkpoint file to load and save at')
 @click.option('--model', help='The model used. Options are: mnist, identity')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
-@click.option('--batch_size', default=1000, show_default=True,
+@click.option('--batch_size', default=50, show_default=True,
               help='Batch size to load and feed to the network')
 @click.option('--epochs', default=20, show_default=True,
               help='Model epoch count')
-@click.option('--learning_rate', default=0.01, show_default=True,
+@click.option('--learning_rate', default=0.30, show_default=True,
               help='Model learning rate')
-@click.option('--display_step', default=1, show_default=True,
+@click.option('--display_step', default=50, show_default=True,
               help='How often to print epoch update')
 @click.option('--save_delay', default=60, show_default=True,
               help='Seconds between each save')
@@ -36,9 +35,11 @@ def main(source, model, checkpoint, batch_size, epochs, learning_rate, display_s
 
     # Construct the model
     if model == "mnist":
-        input, prediction, output = mnist_autoencoder.build_model()
+        input, prediction, output = mnist.build_model()
     elif model == "identity":
-        input, prediction, output = identity_autoencoder.build_model()
+        input, prediction, output = identity.build_model()
+    elif model == "perceptron":
+        input, prediction, output = perceptron.build_model()
     else:
         raise Exception("Model name must be provided")
 
@@ -46,15 +47,16 @@ def main(source, model, checkpoint, batch_size, epochs, learning_rate, display_s
         checkpoint = os.path.join("checkpoints", "{}.ckpt".format(model))
 
     # Define loss and optimizer, minimize the squared error
-    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(prediction, output)
-    cost = tf.reduce_mean(cross_entropy)
+    # cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(prediction, tf.slice(input, [0, 0], [-1, 234]))
+    # cost = tf.reduce_mean(cross_entropy)
+    cost = tf.reduce_sum(tf.pow(prediction - input, 2))
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
     # Launch the graph
     init = tf.initialize_all_variables()
     sess = tf.Session()
     sess.run(init)
-    dataset = read_data_set('data/serialized.hdf5')
+    dataset = read_data_set(source)
 
     saver = tf.train.Saver()
     start_time = time.time()
@@ -64,26 +66,29 @@ def main(source, model, checkpoint, batch_size, epochs, learning_rate, display_s
         saver.restore(sess, checkpoint)
 
     # Training cycle
+    display_counter = 0
     for epoch in range(epochs):
         # Loop over all batches
         for batch_mistake, batch_correct in dataset.batched_training(batch_size):
             # Run optimization op (backprop) and cost op (to get loss value)
             _, c = sess.run([optimizer, cost], feed_dict={output: batch_correct, input: batch_mistake})
-            print("Epoch:", '%04d' % (epoch + 1),
-                  "cost=", "{}".format(c),
-                  "Time: {} seconds".format(time.time() - start_time))
+            display_counter += 1
+            if display_counter % display_step == 0:
+                print("Epoch:", '%04d' % (epoch + 1),
+                      "cost=", "{}".format(c),
+                      "Time: {} seconds".format(time.time() - start_time))
 
         # Display logs per epoch step
-        if epoch % display_step == 0:
-            print("Epoch:", '%04d' % (epoch + 1),
-                  "cost=", "{:.9f}".format(c),
-                  "Time: {} seconds".format(time.time() - start_time))
+        print("Epoch:", '%04d' % (epoch + 1),
+              "cost=", "{:.9f}".format(c),
+              "Time: {} seconds".format(time.time() - start_time))
 
         if time.time() - last_saved > save_delay:
             last_saved = time.time()
             saver.save(sess, checkpoint)
             print("Saved at {}".format(checkpoint))
 
+    saver.save(sess, checkpoint)
     print("Optimization Finished!")
 
 
