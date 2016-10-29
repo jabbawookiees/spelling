@@ -14,9 +14,8 @@ import tensorflow as tf
 
 def autoencoder_model():
     # Network Parameters
-    n_hidden_1 = 400  # 1st layer num features
-    n_input = 520  # MNIST data input (img shape: 28*28)
-    n_output = 494  # MNIST data input (img shape: 28*28)
+    n_input = 494
+    n_output = 494
 
     misspelling = tf.placeholder("float", [None, n_input], name="mistake")
     correct = tf.placeholder("float", [None, n_output], name="correct")

@@ -63,8 +63,8 @@ def merge(fnames, destination_writer):
               help='Directory containing the output of generator.py')
 @click.option('--destination', default='data/result.csv', show_default=True,
               help='File containing deduplicated csv')
-@click.option('--tmp', default='data/tmp', show_default=True,
-              help='Where to save garbled data.')
+@click.option('--tmp', default='data/sorted', show_default=True,
+              help='Where to save sorted data before the merge step.')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
 def main(source, destination, tmp, processors):

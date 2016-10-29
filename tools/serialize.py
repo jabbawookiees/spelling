@@ -48,6 +48,9 @@ def main(source, destination, processors):
     dest_file = h5py.File(destination, "w")
     correct_dataset = dest_file.create_dataset("correct", (0, 494), maxshape=(None, 494), dtype='int8')
     mistake_dataset = dest_file.create_dataset("mistake", (0, 520), maxshape=(None, 520), dtype='int8')
+    # dest_file = h5py.File(destination, "a")
+    # correct_dataset = dest_file["correct"]
+    # mistake_dataset = dest_file["mistake"]
     reader = csv.reader(inp)
 
     counter = 0
@@ -55,8 +58,12 @@ def main(source, destination, processors):
         args = []
         for correct, mistake, count, edits in group:
             args.append((correct, mistake))
+            # if counter > 2614000:
+            #     print correct, mistake
         counter += len(args)
         print counter
+        # if counter <= 2614000:
+        #     continue
         mapped = pool.map(process, args)
 
         for correct_arr, mistake_arr in mapped:

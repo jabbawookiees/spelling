@@ -33,6 +33,8 @@ def process(args):
     with open(filename, "w") as output:
         writer = csv.writer(output)
         for word, count in words_with_counts:
+            if not (set(word) <= set("abcdefghijklmnopqrstuvwxyz")):
+                continue
             for mistake in func(word):
                 writer.writerow([word, mistake, "{:010}".format(count), edit_distance])
 
@@ -40,25 +42,37 @@ def process(args):
 @click.command()
 @click.option('--source', default='data/raw-data.txt', show_default=True,
               help='Raw data file.')
-@click.option('--destination', default='data/output', show_default=True,
+@click.option('--destination', default='data/generated', show_default=True,
               help='Where to save garbled data.')
+@click.option('--edits', default=2, show_default=True,
+              help='Maximum edit distance allowed.')
+@click.option('--fragments', default=None, show_default=True,
+              help='Number of fragments to chunk the edit distance 2 set.')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
-def main(source, destination, processors):
+def main(source, destination, edits, fragments, processors):
     try:
         os.makedirs(destination)
     except OSError:
         pass
+    edits = int(edits)
+    processors = int(processors)
+    if fragments is None:
+        fragments = processors
+    else:
+        fragments = int(fragments)
 
     words_with_counts = read_input(source)
 
     pool = Pool(processors)
     args = []
     args.append([words_with_counts, 0, os.path.join(destination, "data-edit-0.csv")])
-    args.append([words_with_counts, 1, os.path.join(destination, "data-edit-1.csv")])
-    for i, chunk in enumerate(chunks(words_with_counts, processors)):
-        fname = os.path.join(destination, "data-edit-2-part-{:02}.csv".format(i))
-        args.append([chunk, 2, fname])
+    if 1 <= edits:
+        args.append([words_with_counts, 1, os.path.join(destination, "data-edit-1.csv")])
+    if 2 <= edits:
+        for i, chunk in enumerate(chunks(words_with_counts, fragments)):
+            fname = os.path.join(destination, "data-edit-2-part-{:02}.csv".format(i))
+            args.append([chunk, 2, fname])
     pool.map(process, args)
 
 

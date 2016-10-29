@@ -5,7 +5,8 @@ import click
 import tensorflow as tf
 
 from reader import read_data_set
-from autoencoder import autoencoder_model
+import mnist_autoencoder
+import identity_autoencoder
 
 
 @click.command()
@@ -13,6 +14,9 @@ from autoencoder import autoencoder_model
               help='File containing trimmed csv')
 @click.option('--checkpoint', default='checkpoints/default.ckpt', show_default=True,
               help='Checkpoint file to load and save at')
+@click.option('--model', help='The model used. Options are: mnist, identity')
+@click.option('--checkpoint', default=None, show_default=True,
+              help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
 @click.option('--batch_size', default=1000, show_default=True,
               help='Batch size to load and feed to the network')
 @click.option('--epochs', default=20, show_default=True,
@@ -23,7 +27,7 @@ from autoencoder import autoencoder_model
               help='How often to print epoch update')
 @click.option('--save_delay', default=60, show_default=True,
               help='Seconds between each save')
-def main(source, checkpoint, batch_size, epochs, learning_rate, display_step, save_delay):
+def main(source, model, checkpoint, batch_size, epochs, learning_rate, display_step, save_delay):
     batch_size = int(batch_size)
     epochs = int(epochs)
     learning_rate = float(learning_rate)
@@ -31,11 +35,20 @@ def main(source, checkpoint, batch_size, epochs, learning_rate, display_step, sa
     save_delay = int(save_delay)
 
     # Construct the model
-    input, prediction, output = autoencoder_model()
+    if model == "mnist":
+        input, prediction, output = mnist_autoencoder.build_model()
+    elif model == "identity":
+        input, prediction, output = identity_autoencoder.build_model()
+    else:
+        raise Exception("Model name must be provided")
+
+    if checkpoint is None:
+        checkpoint = os.path.join("checkpoints", "{}.ckpt".format(model))
 
     # Define loss and optimizer, minimize the squared error
-    cost = tf.reduce_mean(tf.pow(output - prediction, 2))
-    optimizer = tf.train.RMSPropOptimizer(learning_rate).minimize(cost)
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(prediction, output)
+    cost = tf.reduce_mean(cross_entropy)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
 
     # Launch the graph
     init = tf.initialize_all_variables()
@@ -56,6 +69,9 @@ def main(source, checkpoint, batch_size, epochs, learning_rate, display_step, sa
         for batch_mistake, batch_correct in dataset.batched_training(batch_size):
             # Run optimization op (backprop) and cost op (to get loss value)
             _, c = sess.run([optimizer, cost], feed_dict={output: batch_correct, input: batch_mistake})
+            print("Epoch:", '%04d' % (epoch + 1),
+                  "cost=", "{}".format(c),
+                  "Time: {} seconds".format(time.time() - start_time))
 
         # Display logs per epoch step
         if epoch % display_step == 0:
