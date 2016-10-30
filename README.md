@@ -10,7 +10,7 @@ This comes from https://raw.githubusercontent.com/hermitdave/FrequencyWords/mast
 For pre-processing, I did the following steps:
 I took the following steps to preprocess the data:
 1. Break up raw-data.txt into different groups and compute all words up to a fixed edit distance.
-   After that I store them in separate files because the data set becomes too big to load in memory. (tools/generator.py)
+   After that I store them in separate files because the data set becomes too big to load in memory. (tools/generate.py)
    During this step I also remove all words that contain non-alphanumeric characters and all words betwen 4 and 9 in length.
 2. I sort each individual file, then apply a mergesort-based algorithm to delete duplicates. This gives me a one-to-one map for
    misspelling to correct spelling. I prioritize items by smaller edit distance and more popular correct word. (tools/deduplicate.py)

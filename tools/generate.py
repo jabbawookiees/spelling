@@ -2,9 +2,9 @@
 Takes the raw data file and makes a set of files containing all words up to
 a fixed edit distance.
 Usage is:
-python tools/generator.py --source data/raw-data.txt --edits 1
+python tools/generate.py --source data/raw-data.txt --edits 1
 
-Use `python tools/generator.py --help` for a list of options
+Use `python tools/generate.py --help` for a list of options
 """
 import csv
 import os

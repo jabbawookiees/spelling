@@ -14,10 +14,10 @@ import tensorflow as tf
 
 def build_model():
     # Network Parameters
-    n_hidden_1 = 260  # 1st layer num features
-    n_hidden_2 = 130  # 2nd layer num features
-    n_input = 520  # MNIST data input (img shape: 28*28)
-    n_output = 494  # MNIST data input (img shape: 28*28)
+    n_hidden_1 = 165  # 1st layer num features
+    n_hidden_2 = 117  # 2nd layer num features
+    n_input = 234     # Input shape
+    n_output = 234    # Output shape
 
     misspelling = tf.placeholder("float", [None, n_input], name="mistake")
     correct = tf.placeholder("float", [None, n_output], name="correct")

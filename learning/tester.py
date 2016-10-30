@@ -6,7 +6,7 @@ import tensorflow as tf
 import IPython
 
 import mnist
-import identity
+import softmax_perceptron
 import perceptron
 
 
@@ -31,7 +31,7 @@ def unvectorize(arr):
 
 
 @click.command()
-@click.option('--model', help='The model used. Options are: mnist, identity')
+@click.option('--model', help='The model used. Options are: perceptron, mnist, softmax_perceptron')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
 def main(model, checkpoint):
@@ -40,8 +40,8 @@ def main(model, checkpoint):
 
     if model == "mnist":
         input, prediction, output = mnist.build_model()
-    elif model == "identity":
-        input, prediction, output = identity.build_model()
+    elif model == "softmax_perceptron":
+        input, prediction, output = softmax_perceptron.build_model()
     elif model == "perceptron":
         input, prediction, output = perceptron.build_model()
     else:
