@@ -23,7 +23,7 @@ import convolution
               help='Model epoch count')
 @click.option('--learning_rate', default=0.30, show_default=True,
               help='Model learning rate')
-@click.option('--display_step', default=50, show_default=True,
+@click.option('--display_step', default=1, show_default=True,
               help='How often to print epoch update')
 @click.option('--save_delay', default=60, show_default=True,
               help='Seconds between each save')
@@ -72,19 +72,23 @@ def main(data, model, checkpoint, batch_size, epochs, learning_rate, display_ste
     display_counter = 0
     for epoch in range(epochs):
         # Loop over all batches
+        c_sum, c_count = 0, 0
         for batch_mistake, batch_correct in dataset.batched_training(batch_size):
             # Run optimization op (backprop) and cost op (to get loss value)
             _, c = sess.run([optimizer, cost], feed_dict={output: batch_correct, input: batch_mistake})
+            c_sum += c
+            c_count += 1
             display_counter += 1
-            if display_counter % display_step == 0:
+            if os.environ.get("DEBUG_TRAINER") == "True" and display_counter % display_step == 0:
                 print("Epoch:", '%04d' % (epoch + 1),
                       "cost=", "{}".format(c),
                       "Time: {} seconds".format(time.time() - start_time))
 
         # Display logs per epoch step
-        print("Epoch:", '%04d' % (epoch + 1),
-              "cost:", "{:.9f}".format(c),
-              "Time: {} seconds".format(time.time() - start_time))
+        if epoch % display_step == 0:
+            print("Epoch:", '%04d' % (epoch + 1),
+                  "cost:", "{:.9f}".format(c_sum / c_count),
+                  "Time: {} seconds".format(time.time() - start_time))
 
         if time.time() - last_saved > save_delay:
             last_saved = time.time()
