@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 import click
@@ -9,6 +10,8 @@ import mnist
 import softmax_perceptron
 import perceptron
 import convolution
+
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 
 @click.command()
