@@ -8,9 +8,12 @@ class SpellingDataBatcher(object):
         self.batch_size = batch_size
 
     def __iter__(self):
-        file = self.data.file
-        for idx in xrange(0, file["correct"].shape[0], self.batch_size):
-            yield file["mistake"][idx: idx + self.batch_size], file["correct"][idx:idx + self.batch_size]
+        if self.batch_size != -1:
+	    file = self.data.file
+	    for idx in xrange(0, file["correct"].shape[0], self.batch_size):
+	        yield file["mistake"][idx: idx + self.batch_size], file["correct"][idx:idx + self.batch_size]
+        else:
+            yield self.data.file["mistake"], self.data.file["correct"]
 
 
 class SpellingData(object):

@@ -15,7 +15,7 @@ def build_model():
     n_alphabet = 26
     n_input = n_alphabet * n_characters
     n_output = n_alphabet * n_characters
-    conv1_features = 20
+    conv1_features = 200
 
     misspelled = tf.placeholder("float", [None, n_input], name="mistake")
     correct = tf.placeholder("float", [None, n_output], name="correct")

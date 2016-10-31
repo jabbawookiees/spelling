@@ -5,9 +5,7 @@ import numpy as np
 import tensorflow as tf
 import IPython
 
-import mnist
-import softmax_perceptron
-import perceptron
+from learners import learners
 
 
 def vectorize(string, size):
@@ -38,12 +36,8 @@ def main(model, checkpoint):
     if checkpoint is None:
         checkpoint = os.path.join("checkpoints", "{}.ckpt".format(model))
 
-    if model == "mnist":
-        input, prediction, output = mnist.build_model()
-    elif model == "softmax_perceptron":
-        input, prediction, output = softmax_perceptron.build_model()
-    elif model == "perceptron":
-        input, prediction, output = perceptron.build_model()
+    if model in learners:
+        input, prediction, output = learners[model].build_model()
     else:
         raise Exception("Model name must be provided")
 

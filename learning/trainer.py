@@ -6,10 +6,7 @@ import click
 import tensorflow as tf
 
 from reader import read_data_set
-import mnist
-import softmax_perceptron
-import perceptron
-import convolution
+from learners import learners
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
@@ -20,7 +17,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 @click.option('--model', help='The model used. Options are: perceptron, mnist, softmax_perceptron')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
-@click.option('--batch_size', default=50, show_default=True,
+@click.option('--batch_size', default=-1, show_default=True,
               help='Batch size to load and feed to the network')
 @click.option('--epochs', default=50, show_default=True,
               help='Model epoch count')
@@ -38,14 +35,8 @@ def main(data, model, checkpoint, batch_size, epochs, learning_rate, display_ste
     save_delay = int(save_delay)
 
     # Construct the model
-    if model == "mnist":
-        input, prediction, output = mnist.build_model()
-    elif model == "softmax_perceptron":
-        input, prediction, output = softmax_perceptron.build_model()
-    elif model == "perceptron":
-        input, prediction, output = perceptron.build_model()
-    elif model == "convolution":
-        input, prediction, output = convolution.build_model()
+    if model in learners:
+        input, prediction, output = learners[model].build_model()
     else:
         raise Exception("Model name must be provided")
 
