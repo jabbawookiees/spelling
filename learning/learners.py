@@ -4,6 +4,7 @@ import convolution
 import perceptron
 import autoencoder
 import autoencoder2
+import lenet
 
 learners = {
     "mnist": mnist,
@@ -12,5 +13,5 @@ learners = {
     "perceptron": perceptron,
     "autoencoder": autoencoder,
     "autoencoder2": autoencoder2,
+    "lenet": lenet,
 }
-
