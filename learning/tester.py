@@ -30,9 +30,11 @@ def unvectorize(arr):
 
 @click.command()
 @click.option('--model', help='The model used. Options are: perceptron, mnist, softmax_perceptron')
+@click.option('--length', default=9, show_default=True,
+              help='Maximum length of each string')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
-def main(model, checkpoint):
+def main(model, length, checkpoint):
     if checkpoint is None:
         checkpoint = os.path.join("checkpoints", "{}.ckpt".format(model))
 
@@ -50,7 +52,7 @@ def main(model, checkpoint):
         saver.restore(sess, checkpoint)
 
     def check(mistake):
-        v_mistake = vectorize(mistake, 9)
+        v_mistake = vectorize(mistake, length)
         result = sess.run(prediction, feed_dict={input: v_mistake})
         print unvectorize(result)
 
