@@ -20,8 +20,6 @@ import click
 import h5py
 import numpy as np
 
-MAX_LENGTH = 9
-
 
 def group_by_k(iterable, k):
     group = []
@@ -42,9 +40,9 @@ def vectorize(string, size):
 
 
 def process(args):
-    correct, mistake = args
-    correct_arr = vectorize(correct, MAX_LENGTH)
-    mistake_arr = vectorize(mistake, MAX_LENGTH)
+    correct, mistake, length = args
+    correct_arr = vectorize(correct, length)
+    mistake_arr = vectorize(mistake, length)
     return correct_arr, mistake_arr
 
 
@@ -53,21 +51,23 @@ def process(args):
               help='File containing deduplicated data')
 @click.option('--destination', default=None, show_default=True,
               help='Destination of serialized items')
+@click.option('--length', default=9, show_default=True,
+              help='Maximum length of each string')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
-def main(source, destination, processors):
+def main(source, destination, length, processors):
     """Pre-compute the matrices for the strings, then serialize them into a numpy-ready format.
     This pre-computation provides a speed up on the order of 100x because we have to re-compute every
     pass otherwise since the data set is so huge"""
     if destination is None:
         destination = os.path.join(os.path.dirname(source), "serialized.hdf5")
-
-    pool = Pool(processors)
+    length = int(length)
+    pool = Pool(int(processors))
 
     inp = open(source)
     dest_file = h5py.File(destination, "w")
-    correct_dataset = dest_file.create_dataset("correct", (0, 26 * MAX_LENGTH), maxshape=(None, 26 * MAX_LENGTH), dtype='int8')
-    mistake_dataset = dest_file.create_dataset("mistake", (0, 26 * MAX_LENGTH), maxshape=(None, 26 * MAX_LENGTH), dtype='int8')
+    correct_dataset = dest_file.create_dataset("correct", (0, 26 * length), maxshape=(None, 26 * length), dtype='int8')
+    mistake_dataset = dest_file.create_dataset("mistake", (0, 26 * length), maxshape=(None, 26 * length), dtype='int8')
 
     reader = csv.reader(inp)
 
@@ -75,7 +75,7 @@ def main(source, destination, processors):
     for group in group_by_k(reader, 1000):
         args = []
         for correct, mistake, count, edits in group:
-            args.append((correct, mistake))
+            args.append((correct, mistake, length))
 
         counter += len(args)
         print counter

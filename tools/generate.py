@@ -15,9 +15,6 @@ import click
 
 from edits import edits0, edits1, edits2
 
-MIN_LENGTH = 4
-MAX_LENGTH = 9
-
 
 def read_input(filename):
     words_with_counts = []
@@ -35,7 +32,7 @@ def chunks(list, n_chunks):
 
 
 def process(args):
-    words_with_counts, edit_distance, filename = args
+    words_with_counts, edit_distance, min_length, max_length, filename = args
     func = edits0
     if edit_distance == 1:
         func = edits1
@@ -44,12 +41,12 @@ def process(args):
     with open(filename, "w") as output:
         writer = csv.writer(output)
         for word, count in words_with_counts:
-            if MIN_LENGTH > len(word) or len(word) > MAX_LENGTH:
+            if min_length > len(word) or len(word) > max_length:
                 continue
             if not (set(word) <= set("abcdefghijklmnopqrstuvwxyz")):
                 continue
             for mistake in func(word):
-                if MIN_LENGTH > len(mistake) or len(mistake) > MAX_LENGTH:
+                if min_length > len(mistake) or len(mistake) > max_length:
                     continue
                 writer.writerow([word, mistake, "{:010}".format(count), edit_distance])
 
@@ -61,11 +58,15 @@ def process(args):
               help='Where to save the misspelled data. By default stores in a folder beside the raw data.')
 @click.option('--edits', default=1, show_default=True,
               help='Maximum edit distance allowed. Max of 2.')
+@click.option('--min_length', default=4, show_default=True,
+              help='Minimum length of strings allowed.')
+@click.option('--max_length', default=9, show_default=True,
+              help='Maximum length of strings allowed.')
 @click.option('--fragments', default=128, show_default=True,
               help='Exponential blowup on edit distance 2 requires us to chunk the files for processing.')
 @click.option('--processors', default=4, show_default=True,
               help='Number of processors.')
-def main(source, destination, edits, fragments, processors):
+def main(source, destination, edits, min_length, max_length, fragments, processors):
     if destination is None:
         destination = os.path.join(os.path.dirname(source), "generated")
 
@@ -81,17 +82,19 @@ def main(source, destination, edits, fragments, processors):
     else:
         fragments = int(fragments)
 
+    min_length = int(min_length)
+    max_length = int(max_length)
     words_with_counts = read_input(source)
 
     pool = Pool(processors)
     args = []
-    args.append([words_with_counts, 0, os.path.join(destination, "data-edit-0.csv")])
+    args.append([words_with_counts, 0, min_length, max_length, os.path.join(destination, "data-edit-0.csv")])
     if 1 <= edits:
-        args.append([words_with_counts, 1, os.path.join(destination, "data-edit-1.csv")])
+        args.append([words_with_counts, 1, min_length, max_length, os.path.join(destination, "data-edit-1.csv")])
     if 2 <= edits:
         for i, chunk in enumerate(chunks(words_with_counts, fragments)):
             fname = os.path.join(destination, "data-edit-2-part-{:02}.csv".format(i))
-            args.append([chunk, 2, fname])
+            args.append([chunk, 2, min_length, max_length, fname])
     pool.map(process, args)
 
 
