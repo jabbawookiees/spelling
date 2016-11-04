@@ -32,12 +32,12 @@ def build_model():
     kernel = tf.Variable(tf.truncated_normal(kernel_shape, stddev=5e-2))
     conv = tf.nn.conv1d(conv_in, kernel, conv1_stride, "SAME")
     conv_reshaped = tf.reshape(conv, [-1, 1, conv1_columns, conv1_features])
-    norm = tf.nn.local_response_normalization(conv_reshaped)
-    norm_reshaped = tf.reshape(norm, [-1, conv1_columns * conv1_features])
+    relu = tf.nn.relu6(conv)
+    relu_reshaped = tf.reshape(relu, [-1, conv1_columns * conv1_features])
 
     dense_weights = tf.Variable(tf.random_normal([conv1_columns * conv1_features, n_dense]))
     dense_bias = tf.Variable(tf.random_normal([n_dense]))
-    dense = tf.nn.sigmoid(tf.add(tf.matmul(norm_reshaped, dense_weights), dense_bias))
+    dense = tf.nn.sigmoid(tf.add(tf.matmul(relu_reshaped, dense_weights), dense_bias))
 
     output_weights = tf.Variable(tf.random_normal([n_dense, n_output]))
     output_bias = tf.Variable(tf.random_normal([n_output]))
