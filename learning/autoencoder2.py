@@ -16,8 +16,8 @@ def build_model():
     # Network Parameters
     n_input = 234     # Input shape
     n_output = 234    # Output shape
-    n_hidden_1 = 234  # 1st layer num features
-    n_hidden_2 = 234  # 2nd layer num features
+    n_hidden_1 = 217  # 1st layer num features
+    n_hidden_2 = 200  # 2nd layer num features
 
     misspelling = tf.placeholder("float", [None, n_input], name="mistake")
     correct = tf.placeholder("float", [None, n_output], name="correct")
