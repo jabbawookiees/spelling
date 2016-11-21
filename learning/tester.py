@@ -1,5 +1,5 @@
 import os
-
+import csv
 import click
 import numpy as np
 import tensorflow as tf
@@ -28,15 +28,47 @@ def unvectorize(arr):
     return ''.join([chr(c + 97) for c in result])
 
 
+def interactive_mode(sess, input, prediction, length):
+    def check(mistake):
+        v_mistake = vectorize(mistake, length)
+        result = sess.run(prediction, feed_dict={input: v_mistake})
+        print unvectorize(result)
+    print "You are in interactive mode."
+    print "Call `check(word)` to see what the predicted correction is."
+    IPython.embed()
+
+
+def batch_mode(sess, input, prediction, length, data):
+    inp = open(data)
+    reader = csv.reader(inp)
+    correct_answers = 0
+    total_answers = 0
+    for correct, mistake, count, edits in reader:
+        v_mistake = vectorize(mistake, length)
+        result = sess.run(prediction, feed_dict={input: v_mistake})
+        answer = unvectorize(result)
+        total_answers += 1
+        if correct in answer:
+            correct_answers += 1
+        if total_answers % 10000 == 0:
+            print "Got {}/{} correct".format(correct_answers, total_answers)
+    print "Got {}/{} correct".format(correct_answers, total_answers)
+
+
 @click.command()
 @click.option('--model', help='The model used. Options are: perceptron, mnist, softmax_perceptron')
 @click.option('--length', default=9, show_default=True,
               help='Maximum length of each string')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
-def main(model, length, checkpoint):
+@click.option('--interactive', default="True", show_default=True,
+              help='Whether we should test interactively or not')
+@click.option('--data', default="data/deduplicated.csv", show_default=True,
+              help='Whether we should test interactively or not')
+def main(model, length, checkpoint, interactive, data):
     if checkpoint is None:
         checkpoint = os.path.join("checkpoints", "{}.ckpt".format(model))
+    interactive = interactive == "True"
 
     if model in learners:
         input, prediction, output = learners[model].build_model()
@@ -51,12 +83,10 @@ def main(model, length, checkpoint):
     if os.path.exists(checkpoint):
         saver.restore(sess, checkpoint)
 
-    def check(mistake):
-        v_mistake = vectorize(mistake, length)
-        result = sess.run(prediction, feed_dict={input: v_mistake})
-        print unvectorize(result)
-
-    IPython.embed()
+    if interactive:
+        interactive_mode(sess, input, prediction, length)
+    else:
+        batch_mode(sess, input, prediction, length, data)
 
 if __name__ == '__main__':
     main()

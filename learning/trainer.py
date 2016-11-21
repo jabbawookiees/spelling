@@ -14,7 +14,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 @click.command()
 @click.option('--data', default='data/serialized.hdf5', show_default=True,
               help='File containing trimmed csv')
-@click.option('--model', help='The model used. Options are: perceptron, mnist, softmax_perceptron')
+@click.option('--model', help='The model used. Options are: autoencoder, autoencoder2, convolution, and perceptron')
 @click.option('--checkpoint', default=None, show_default=True,
               help='Checkpoint file to save the model. Default is checkpoints/`model_name`.ckpt')
 @click.option('--batch_size', default=-1, show_default=True,

@@ -74,8 +74,8 @@ def merge(fnames, destination_writer):
 
 
 @click.command()
-@click.option('--source', default='data/output', show_default=True,
-              help='Directory containing the output of generator.py')
+@click.option('--source', default='data/generated', show_default=True,
+              help='Directory containing the output of generate.py')
 @click.option('--destination', default=None, show_default=True,
               help='File containing deduplicated csv')
 @click.option('--sorted_files', default=None, show_default=True,
