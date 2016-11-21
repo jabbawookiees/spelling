@@ -1,3 +1,13 @@
+# Requirements
+This project requires the following python packages:
+* `click`
+* `tensorflow`
+* `ipython`
+* `h5py`
+* `numpy`
+
+I think that covers everything, but `requirements.txt` contains a pip freeze of my virtual environment in case anything is missing.
+
 # Data Set
 The data that we use is the 50,000 most-commonly occurring words in English.
 
